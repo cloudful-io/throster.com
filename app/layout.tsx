@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { ThemeProvider } from "@/components/theme-provider"
 import './globals.css';
+
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -19,9 +21,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} antialiased`}>
-        {children}
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+          {children}
+        </ThemeProvider>
         <SpeedInsights />
       </body>
     </html>

@@ -24,12 +24,9 @@ function DashboardHeader() {
 
   return (
     <div className="flex justify-between items-center mb-8">
-      <h1 className="text-3xl font-bold">Subdomain Management</h1>
+      <h1 className="text-3xl font-bold text-foreground">Subdomain Management</h1>
       <div className="flex items-center gap-4">
-        <Link
-          href={`${protocol}://${rootDomain}`}
-          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-        >
+        <Link href={`${protocol}://${rootDomain}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           {rootDomain}
         </Link>
       </div>
@@ -49,8 +46,8 @@ function TenantGrid({
   if (tenants.length === 0) {
     return (
       <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-gray-500">No subdomains have been created yet.</p>
+          <CardContent className="py-8 text-center">
+          <p className="text-muted-foreground">No subdomains have been created yet.</p>
         </CardContent>
       </Card>
     );
@@ -74,7 +71,7 @@ function TenantGrid({
                   size="icon"
                   type="submit"
                   disabled={isPending}
-                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  className="text-muted-foreground hover:text-foreground hover:bg-popover"
                 >
                   {isPending ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -88,7 +85,7 @@ function TenantGrid({
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="text-4xl">{tenant.emoji}</div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 Created: {new Date(tenant.createdAt).toLocaleDateString()}
               </div>
             </div>
@@ -97,7 +94,7 @@ function TenantGrid({
                 href={`${protocol}://${tenant.subdomain}.${rootDomain}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:underline text-sm"
+                className="text-accent hover:underline text-sm"
               >
                 Visit subdomain →
               </a>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useTheme } from "next-themes"
+import { Typography } from "./Typography"
 
 interface LogoProps {
   size?: "small" | "medium" | "large"
@@ -10,17 +11,9 @@ interface LogoProps {
 export function Logo({ size = "medium", className = "" }: LogoProps) {
   const { theme } = useTheme()
 
-  const dimensions = {
-    small: "h-6 w-6",
-    medium: "h-8 w-8",
-    large: "h-12 w-12",
-  }
-
   return (
-    <img
-      src={theme === "dark" ? "/logo-dark.svg" : "/logo-light.svg"}
-      className={`${dimensions[size]} ${className}`}
-      alt="Company Logo"
-    />
+    <Typography size="large" weight="bold" color={theme === "dark" ? "light" : "dark"}>
+      Throster
+    </Typography>
   )
 }
