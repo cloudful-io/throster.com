@@ -12,7 +12,7 @@ interface LogoProps {
 }
 
 export function Logo({ size = "medium", className = "", link = false, image = false }: LogoProps) {
-  const rosterSizeClass = size === "large" ? "text-3xl sm:text-4xl" : size === "xlarge" ? "text-4xl sm:text-5xl" : ""
+  const rosterSizeClass = size === "medium" ? "text-xl sm:text-2xl" : size === "large" ? "text-3xl sm:text-4xl" : size === "xlarge" ? "text-4xl sm:text-5xl" : ""
   const thSizeClass = size === "large" ? "text-2xl sm:text-3xl" : size === "xlarge" ? "text-3xl sm:text-4xl" : ""
 
   const useLargeImage = image === true ? (size === 'large' || size === 'xlarge') : image === 'large'

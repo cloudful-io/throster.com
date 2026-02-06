@@ -26,7 +26,7 @@ export default function HeaderClient() {
 
   return (
     <header className="bg-background border-b sticky top-0 z-50">
-      <div className="container mx-auto px-4 flex items-center justify-between py-4">
+      <div className="container mx-auto px-4 flex items-center justify-between py-3">
         <div className="flex items-center">
           <Logo size="large" link image />
         </div>
@@ -57,7 +57,7 @@ export default function HeaderClient() {
           <div className="absolute inset-0 bg-popover/40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-0 h-full w-64 bg-background p-4 shadow-lg">
             <div className="flex items-center justify-between mb-6">
-              <Logo size="medium" link image />
+              <Logo size="medium" link/>
               <button onClick={() => setOpen(false)} aria-label="Close menu" className="p-2">
                 <X className="w-6 h-6" />
               </button>
