@@ -1,9 +1,7 @@
 export default function SubdomainLayout({
   children,
-  params
 }: {
   children: React.ReactNode;
-  params: { subdomain: string };
 }) {
   return (
     <div className="subdomain-layout">
