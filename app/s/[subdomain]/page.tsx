@@ -39,7 +39,7 @@ export default async function SubdomainPage({
   return (
     <div className="flex min-h-screen flex-col bg-background p-4">
       <div className="absolute top-4 right-4">
-        <Link href={`${protocol}://${rootDomain}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href={`${protocol}://${rootDomain}`} className="text-sm text-primary hover:text-primary/90 transition-colors">
           {rootDomain}
         </Link>
       </div>

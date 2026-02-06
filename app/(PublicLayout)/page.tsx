@@ -1,6 +1,5 @@
 import { SubdomainForm } from '../subdomain-form';
 import { rootDomain } from '@/lib/utils';
-//import { Logo } from '@/components/shared/logo';
 
 export default async function HomePage() {
   return (
