@@ -36,6 +36,7 @@ export default function HeaderClient() {
             <Link href="/" className={linkClass('/')} aria-current={isActive('/') ? 'page' : undefined}>Home</Link>
             <Link href="/about" className={linkClass('/about')} aria-current={isActive('/about') ? 'page' : undefined}>About</Link>
             <Link href="/features" className={linkClass('/features')} aria-current={isActive('/features') ? 'page' : undefined}>Features</Link>
+            <Link href="/pricing" className={linkClass('/pricing')} aria-current={isActive('/pricing') ? 'page' : undefined}>Pricing</Link>
             <Link href="/admin" className={linkClass('/admin')} aria-current={isActive('/admin') ? 'page' : undefined}>Admin</Link>
           </nav>
           <ModeToggle />
@@ -67,6 +68,7 @@ export default function HeaderClient() {
               <Link href="/" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/'))} aria-current={isActive('/') ? 'page' : undefined}>Home</Link>
               <Link href="/about" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/about'))} aria-current={isActive('/about') ? 'page' : undefined}>About</Link>
               <Link href="/features" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/features'))} aria-current={isActive('/features') ? 'page' : undefined}>Features</Link>
+              <Link href="/pricing" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/pricing'))} aria-current={isActive('/pricing') ? 'page' : undefined}>Pricing</Link>
               <Link href="/admin" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/admin'))} aria-current={isActive('/admin') ? 'page' : undefined}>Admin</Link>
             </nav>
 
