@@ -37,9 +37,10 @@ export default function HeaderClient() {
             <Link href="/about" className={linkClass('/about')} aria-current={isActive('/about') ? 'page' : undefined}>About</Link>
             <Link href="/features" className={linkClass('/features')} aria-current={isActive('/features') ? 'page' : undefined}>Features</Link>
             <Link href="/pricing" className={linkClass('/pricing')} aria-current={isActive('/pricing') ? 'page' : undefined}>Pricing</Link>
-            <Link href="/admin" className={linkClass('/admin')} aria-current={isActive('/admin') ? 'page' : undefined}>Admin</Link>
+            <Link href="/signup" className={linkClass('/signup')} aria-current={isActive('/signup') ? 'page' : undefined}>Sign up</Link>
+            <ModeToggle />
+
           </nav>
-          <ModeToggle />
         </div>
 
         <div className="md:hidden flex items-center">
@@ -58,7 +59,7 @@ export default function HeaderClient() {
           <div className="absolute inset-0 bg-popover/40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-0 h-full w-64 bg-background p-4 shadow-lg">
             <div className="flex items-center justify-between mb-6">
-              <Logo size="medium" link/>
+              <Logo size="medium" link />
               <button onClick={() => setOpen(false)} aria-label="Close menu" className="p-2">
                 <X className="w-6 h-6" />
               </button>
@@ -69,7 +70,7 @@ export default function HeaderClient() {
               <Link href="/about" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/about'))} aria-current={isActive('/about') ? 'page' : undefined}>About</Link>
               <Link href="/features" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/features'))} aria-current={isActive('/features') ? 'page' : undefined}>Features</Link>
               <Link href="/pricing" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/pricing'))} aria-current={isActive('/pricing') ? 'page' : undefined}>Pricing</Link>
-              <Link href="/admin" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/admin'))} aria-current={isActive('/admin') ? 'page' : undefined}>Admin</Link>
+              <Link href="/signup" onClick={() => setOpen(false)} className={cn('flex items-center h-10', linkClass('/signup'))} aria-current={isActive('/signup') ? 'page' : undefined}>Sign up</Link>
             </nav>
 
             <div className="mt-6">

@@ -1,0 +1,278 @@
+// Throster — Multi-Tenant Language School Platform
+// Prisma schema for Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Connection URLs are provided via `prisma.config.ts` for Prisma v7+.
+}
+
+// ─── Subscription Plans ─────────────────────────────────────────────
+
+model Plan {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key               String   @unique              // "seed", "grow", "flourish", "bloom", "evergreen"
+  name              String
+  priceCents        Int      @map("price_cents")             // 0 for Seed (free)
+  billingPeriodDays Int      @map("billing_period_days")      // 365 for annual
+  maxStudents       Int?     @map("max_students")            // null = unlimited
+  maxClasses        Int?     @map("max_classes")             // null = unlimited
+  features          Json?                          // feature flags: { "stripe": true, "activities": true, ... }
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt         DateTime @updatedAt @db.Timestamptz @map("updated_at")
+
+  tenants Tenant[]
+
+  @@map("plans")
+}
+
+// ─── Tenants (Schools) ──────────────────────────────────────────────
+
+model Tenant {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String                          // "Hope Chinese School"
+  subdomain        String    @unique               // "hope-chinese"
+  planId           String    @db.Uuid @map("plan_id")
+  plan             Plan      @relation(fields: [planId], references: [id])
+  trialEndsAt      DateTime? @db.Timestamptz @map("trial_ends_at") // null = no active trial
+  isActive         Boolean   @default(true) @map("is_active")
+  settings         Json?                           // branding, contact info, points_to_cents rate, etc.
+  createdAt        DateTime  @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt        DateTime  @updatedAt @db.Timestamptz @map("updated_at")
+
+  // Relations
+  billing          TenantBilling?
+  userProfiles     UserProfile[]
+  students         Student[]
+  classes          SchoolClass[]
+  activities       Activity[]
+  fundraisers      Fundraiser[]
+  servicePointDefs ServicePointDefinition[]
+  academicYears    AcademicYear[]
+
+  @@map("tenants")
+}
+
+model TenantBilling {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String   @unique @db.Uuid @map("tenant_id")
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stripeCustomerId String?  @map("stripe_customer_id")
+  subscriptionId   String?  @map("subscription_id")
+  createdAt        DateTime @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt        DateTime @updatedAt @db.Timestamptz @map("updated_at")
+
+  @@map("tenant_billing")
+}
+
+// ─── User Profiles & Roles ──────────────────────────────────────────
+
+enum Role {
+  owner
+  admin
+  teacher
+  parent
+  student
+}
+
+model UserProfile {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authUserId String   @db.Uuid @map("auth_user_id")        // Supabase Auth user ID (auth.users.id)
+  tenantId   String   @db.Uuid @map("tenant_id")
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  role       Role     @default(parent)
+  firstName  String   @map("first_name")
+  lastName   String   @map("last_name")
+  phone      String?
+  createdAt  DateTime @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt  DateTime @updatedAt @db.Timestamptz @map("updated_at")
+
+  taughtClasses SchoolClass[] @relation("TeacherClasses")
+  students      Student[]     @relation("ParentStudents")
+  servicePointLogs ServicePointLog[] @relation("ParticipantLogs")
+
+  // A user can belong to multiple tenants (e.g. parent at 2 schools)
+  @@unique([authUserId, tenantId])
+  @@map("user_profiles")
+}
+
+// ─── Academic Structure ─────────────────────────────────────────────
+
+model AcademicYear {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @db.Uuid @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  name      String                                // "2025-2026"
+  startDate DateTime @db.Date @map("start_date")
+  endDate   DateTime @db.Date @map("end_date")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @db.Timestamptz @map("created_at")
+
+  @@map("academic_years")
+}
+
+// ─── Students ───────────────────────────────────────────────────────
+
+model Student {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String    @db.Uuid @map("tenant_id")
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  firstName   String    @map("first_name")
+  lastName    String    @map("last_name")
+  dateOfBirth DateTime? @db.Date @map("date_of_birth")
+  grade       String?
+  parentId    String    @db.Uuid @map("parent_id")      // UserProfile.id of the parent
+  parent      UserProfile @relation("ParentStudents", fields: [parentId], references: [id])
+  notes       String?
+  createdAt   DateTime  @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt   DateTime  @updatedAt @db.Timestamptz @map("updated_at")
+
+  enrollments      Enrollment[]
+  activitySignups  ActivitySignup[]
+  servicePointLogs ServicePointLog[]
+
+  @@map("students")
+}
+
+// ─── Classes & Enrollment ───────────────────────────────────────────
+
+model SchoolClass {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String   @db.Uuid @map("tenant_id")
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  name        String                              // "Mandarin Level 2"
+  description String?
+  teacherId   String?  @db.Uuid @map("teacher_id") // UserProfile.id
+  teacher     UserProfile? @relation("TeacherClasses", fields: [teacherId], references: [id])
+  maxStudents Int?     @map("max_students")
+  schedule    Json?                               // { day: "Saturday", time: "10:00-12:00", room: "A101" }
+  feeCents    Int      @default(0) @map("fee_cents") // tuition fee for this class
+  createdAt   DateTime @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt   DateTime @updatedAt @db.Timestamptz @map("updated_at")
+
+  enrollments Enrollment[]
+
+  @@map("school_classes")
+}
+
+model Enrollment {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId         String   @db.Uuid @map("student_id")
+  student           Student  @relation(fields: [studentId], references: [id])
+  classId           String   @db.Uuid @map("class_id")
+  schoolClass       SchoolClass @relation(fields: [classId], references: [id])
+  status            String   @default("active")   // active, withdrawn, waitlisted
+  paymentId         String?  @map("payment_id")   // Stripe Payment Intent / Checkout Session ID
+  amountPaid        Int?     @map("amount_paid")  // cents
+  servicePointDiscount Int   @default(0) @map("service_point_discount") // cents deducted via service points
+  enrolledAt        DateTime @default(now()) @db.Timestamptz @map("enrolled_at")
+
+  @@unique([studentId, classId])
+  @@map("enrollments")
+}
+
+// ─── Extra Curricular Activities ────────────────────────────────────
+
+model Activity {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String    @db.Uuid @map("tenant_id")
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  name        String
+  description String?
+  feeCents        Int       @default(0) @map("fee_cents")
+  maxParticipants Int?      @map("max_participants")
+  date            String?
+  time            String?
+  location        String?
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt       DateTime  @updatedAt @db.Timestamptz @map("updated_at")
+
+  signups ActivitySignup[]
+
+  @@map("activities")
+}
+
+model ActivitySignup {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  activityId String   @db.Uuid @map("activity_id")
+  activity   Activity @relation(fields: [activityId], references: [id])
+  studentId  String   @db.Uuid @map("student_id")
+  student    Student  @relation(fields: [studentId], references: [id])
+  paymentId  String?  @map("payment_id")        // Stripe Payment Intent / Checkout Session ID
+  amountPaid Int?     @map("amount_paid")       // cents
+  signedUpAt DateTime @default(now()) @db.Timestamptz @map("signed_up_at")
+
+  @@unique([activityId, studentId])
+  @@map("activity_signups")
+}
+
+// ─── Fundraising ────────────────────────────────────────────────────
+
+model Fundraiser {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String    @db.Uuid @map("tenant_id")
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  name        String
+  description String?
+  goalCents   Int?      @map("goal_cents")
+  startDate   DateTime? @db.Timestamptz @map("start_date")
+  endDate     DateTime? @db.Timestamptz @map("end_date")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @db.Timestamptz @map("created_at")
+
+  donations Donation[]
+
+  @@map("fundraisers")
+}
+
+model Donation {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fundraiserId String     @db.Uuid @map("fundraiser_id")
+  fundraiser   Fundraiser @relation(fields: [fundraiserId], references: [id])
+  donorName    String?    @map("donor_name")
+  donorEmail   String?    @map("donor_email")
+  amountCents  Int        @map("amount_cents")
+  paymentId    String?    @map("payment_id")     // Stripe Payment Intent / Checkout Session ID
+  donatedAt    DateTime   @default(now()) @db.Timestamptz @map("donated_at")
+
+  @@map("donations")
+}
+
+// ─── Service Points ─────────────────────────────────────────────────
+
+model ServicePointDefinition {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String    @db.Uuid @map("tenant_id")
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  name        String                              // "Library Helper", "Event Setup"
+  description String?
+  pointsValue Int       @default(1) @map("points_value") // how many points this activity earns
+  maxSignups  Int?      @map("max_signups")
+  eventDate   DateTime? @db.Timestamptz @map("event_date")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @db.Timestamptz @map("created_at")
+
+  logs ServicePointLog[]
+
+  @@map("service_point_definitions")
+}
+
+model ServicePointLog {
+  id            String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  definitionId  String                 @db.Uuid @map("definition_id")
+  definition    ServicePointDefinition @relation(fields: [definitionId], references: [id])
+  studentId     String?                @db.Uuid @map("student_id") // if a student earned the points
+  student       Student?               @relation(fields: [studentId], references: [id])
+  participantId String?                @db.Uuid @map("participant_id") // UserProfile.id if a parent participated
+  participant   UserProfile?           @relation("ParticipantLogs", fields: [participantId], references: [id])
+  pointsEarned  Int                    @map("points_earned")
+  loggedAt      DateTime               @default(now()) @db.Timestamptz @map("logged_at")
+
+  @@map("service_point_logs")
+}

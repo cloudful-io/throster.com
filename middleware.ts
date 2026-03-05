@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 import { rootDomain } from '@/lib/utils';
 
 function extractSubdomain(request: NextRequest): string | null {
@@ -44,20 +45,95 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const subdomain = extractSubdomain(request);
 
+  // ── Supabase session refresh ──────────────────────────────────────
+  // Create a response that we'll modify with updated cookies
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // Set cookies on the request for downstream server components
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          // Also set cookies on the response for the browser
+          response = NextResponse.next({
+            request: { headers: request.headers },
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // Refresh the session (this updates cookies if the token was refreshed)
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    console.log(`[Middleware] User detected on ${subdomain || 'root'}: ${user.email}`);
+  } else {
+    console.log(`[Middleware] No user detected on ${subdomain || 'root'}`);
+  }
+
+  // ── Subdomain routing ─────────────────────────────────────────────
   if (subdomain) {
-    // Block access to admin page from subdomains
+    // Block access to root-level admin from subdomains
     if (pathname.startsWith('/admin')) {
-      return NextResponse.redirect(new URL('/', request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = '/';
+      return NextResponse.redirect(url);
     }
 
-    // For the root path on a subdomain, rewrite to the subdomain page
+    // Rewrite subdomain requests to the tenant route group
     if (pathname === '/') {
-      return NextResponse.rewrite(new URL(`/s/${subdomain}`, request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = `/s/${subdomain}`;
+      response = NextResponse.rewrite(url, {
+        request: { headers: request.headers },
+      });
+    } else {
+      // For all other paths on the subdomain, prefix with /s/[subdomain]
+      const url = request.nextUrl.clone();
+      url.pathname = `/s/${subdomain}${pathname}`;
+      response = NextResponse.rewrite(url, {
+        request: { headers: request.headers },
+      });
+    }
+
+    // Pass subdomain as a header for downstream use
+    response.headers.set('x-tenant-subdomain', subdomain);
+
+    return response;
+  }
+
+  // ── Root domain routing ───────────────────────────────────────────
+  // Protected routes on the root domain that require authentication
+  const protectedRootPaths = ['/admin'];
+  const isProtected = protectedRootPaths.some((p) => pathname.startsWith(p));
+
+  if (isProtected) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url);
     }
   }
 
-  // On the root domain, allow normal access
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
