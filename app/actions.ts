@@ -76,7 +76,7 @@ export async function signupSchoolAction(
 
   if (planKey !== 'seed') {
     const trialDate = new Date();
-    trialDate.setMonth(trialDate.setMonth(trialDate.getMonth() + 3));
+    trialDate.setMonth(trialDate.getMonth() + 3);
     trialEndsAt = trialDate.toISOString();
   }
 
