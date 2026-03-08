@@ -52,7 +52,7 @@ export default function RotatingQuote() {
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentIndex((prevIndex) => (prevIndex + 1) % quotes.length);
-        }, 5000);
+        }, 8000);
 
         return () => clearInterval(timer);
     }, []);

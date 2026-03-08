@@ -14,7 +14,6 @@ import {
     MoreVertical,
     Trash
 } from 'lucide-react';
-import Link from 'next/link';
 import CreateActivityButton from '../components/CreateActivityButton';
 
 export default async function ActivitiesPage({

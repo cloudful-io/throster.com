@@ -6,6 +6,7 @@ import {
   Shield,
   DollarSign,
   Sparkles,
+  Languages,
   ChevronRight
 } from 'lucide-react';
 
@@ -56,7 +57,7 @@ export default function AboutPage() {
             <div className="relative">
               <div className="aspect-[4/3] rounded-3xl bg-gradient-to-tr from-primary/30 to-primary/10 flex items-center justify-center overflow-hidden border border-border">
                 <div className="p-8 md:p-12 w-full">
-                  <Sparkles className="h-12 w-12 text-primary mx-auto mb-8" />
+                  <Languages className="h-12 w-12 text-primary mx-auto mb-8" />
                   <RotatingQuote />
                 </div>
               </div>
